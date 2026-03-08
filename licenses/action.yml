@@ -1,0 +1,49 @@
+name: "git-pkgs licenses"
+description: "Enforce license policy on dependencies"
+
+inputs:
+  allow:
+    description: "Comma-separated list of allowed SPDX license identifiers (e.g. MIT,Apache-2.0,BSD-2-Clause)"
+    required: false
+    default: ""
+  deny:
+    description: "Comma-separated list of denied SPDX license identifiers (e.g. GPL-3.0,AGPL-3.0)"
+    required: false
+    default: ""
+
+outputs:
+  violations:
+    description: "Whether any license violations were found (true/false)"
+    value: ${{ steps.check.outputs.violations }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check licenses
+      id: check
+      shell: bash
+      env:
+        ALLOW: ${{ inputs.allow }}
+        DENY: ${{ inputs.deny }}
+      run: |
+        args=""
+        if [ -n "${ALLOW}" ]; then
+          args="${args} --allow=${ALLOW}"
+        fi
+        if [ -n "${DENY}" ]; then
+          args="${args} --deny=${DENY}"
+        fi
+
+        if [ -z "${args}" ]; then
+          echo "::error::At least one of 'allow' or 'deny' must be specified"
+          exit 1
+        fi
+
+        # shellcheck disable=SC2086
+        if git-pkgs licenses ${args}; then
+          echo "violations=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "violations=true" >> "$GITHUB_OUTPUT"
+          echo "::error::License policy violations found"
+          exit 1
+        fi

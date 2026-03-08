@@ -1,0 +1,66 @@
+name: "Setup git-pkgs"
+description: "Install git-pkgs and initialize the dependency database"
+
+inputs:
+  version:
+    description: "git-pkgs version to install (e.g. 0.1.9). Defaults to latest."
+    required: false
+    default: "latest"
+  reindex:
+    description: "Run reindex after init to pick up new commits. Set to false to skip."
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Determine version
+      id: version
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        if [ "${INPUT_VERSION}" = "latest" ]; then
+          version=$(curl -sfL https://api.github.com/repos/git-pkgs/git-pkgs/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+        else
+          version="${INPUT_VERSION}"
+        fi
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+    - name: Determine platform
+      id: platform
+      shell: bash
+      run: |
+        os=$(uname -s | tr '[:upper:]' '[:lower:]')
+        arch=$(uname -m)
+        case "${arch}" in
+          x86_64) arch="amd64" ;;
+          aarch64|arm64) arch="arm64" ;;
+        esac
+        echo "os=${os}" >> "$GITHUB_OUTPUT"
+        echo "arch=${arch}" >> "$GITHUB_OUTPUT"
+
+    - name: Install git-pkgs
+      shell: bash
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+        OS: ${{ steps.platform.outputs.os }}
+        ARCH: ${{ steps.platform.outputs.arch }}
+      run: |
+        url="https://github.com/git-pkgs/git-pkgs/releases/download/v${VERSION}/git-pkgs_${VERSION}_${OS}_${ARCH}.tar.gz"
+        curl -sfL "${url}" | tar xz -C /usr/local/bin git-pkgs
+        git-pkgs --version
+
+    - name: Initialize database
+      shell: bash
+      run: |
+        if [ -f .git/pkgs.sqlite3 ]; then
+          echo "Database already exists, skipping init"
+        else
+          git-pkgs init
+        fi
+
+    - name: Reindex
+      if: inputs.reindex == 'true'
+      shell: bash
+      run: git-pkgs reindex

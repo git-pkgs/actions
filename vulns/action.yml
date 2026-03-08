@@ -1,0 +1,88 @@
+name: "git-pkgs vulns"
+description: "Check for vulnerabilities in dependencies and optionally block on severity"
+
+inputs:
+  severity:
+    description: "Minimum severity to fail on: critical, high, medium, low. Leave empty to report only."
+    required: false
+    default: ""
+  sarif:
+    description: "Upload results as SARIF to GitHub Advanced Security. Set to true to enable."
+    required: false
+    default: "false"
+  token:
+    description: "GitHub token for SARIF upload."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  found:
+    description: "Whether vulnerabilities were found (true/false)"
+    value: ${{ steps.scan.outputs.found }}
+  count:
+    description: "Number of vulnerabilities found"
+    value: ${{ steps.scan.outputs.count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Sync vulnerability data
+      shell: bash
+      run: git-pkgs vulns sync
+
+    - name: Scan for vulnerabilities
+      id: scan
+      shell: bash
+      env:
+        SEVERITY: ${{ inputs.severity }}
+      run: |
+        output=$(git-pkgs vulns scan --format=json 2>&1) || true
+        count=$(echo "${output}" | jq -r 'length // 0')
+
+        if [ "${count}" -gt 0 ]; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "found=false" >> "$GITHUB_OUTPUT"
+        fi
+        echo "count=${count}" >> "$GITHUB_OUTPUT"
+
+        echo "${output}" | jq .
+
+        if [ -n "${SEVERITY}" ] && [ "${count}" -gt 0 ]; then
+          # Filter by severity threshold
+          severities="critical high medium low"
+          threshold_reached=false
+          for s in ${severities}; do
+            if [ "${s}" = "${SEVERITY}" ]; then
+              threshold_reached=true
+            fi
+            if [ "${threshold_reached}" = "true" ]; then
+              matching=$(echo "${output}" | jq -r "[.[] | select(.severity == \"${s}\")] | length")
+              if [ "${matching}" -gt 0 ]; then
+                echo "::error::Found ${matching} ${s} severity vulnerabilities"
+                exit 1
+              fi
+            fi
+          done
+        fi
+
+    - name: Generate SARIF
+      if: inputs.sarif == 'true'
+      shell: bash
+      run: git-pkgs vulns scan --format=sarif > results.sarif
+
+    - name: Upload SARIF
+      if: inputs.sarif == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        REF: ${{ github.ref }}
+        SHA: ${{ github.sha }}
+      run: |
+        encoded=$(gzip -c results.sarif | base64 -w0 2>/dev/null || gzip -c results.sarif | base64)
+        gh api "repos/${REPO}/code-scanning/sarifs" \
+          --method POST \
+          --field "commit_sha=${SHA}" \
+          --field "ref=${REF}" \
+          --field "sarif=${encoded}"
