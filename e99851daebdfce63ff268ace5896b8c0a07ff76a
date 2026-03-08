@@ -1,0 +1,31 @@
+setup/README.md
+  a1a9baa8b1e56973 1-38
+vulns/README.md
+  a1a9baa8b1e56973 1-71
+licenses/README.md
+  a1a9baa8b1e56973 1-60
+sbom/README.md
+  a1a9baa8b1e56973 1-72
+diff/README.md
+  a1a9baa8b1e56973 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "e99851daebdfce63ff268ace5896b8c0a07ff76a",
+  "prompts": {
+    "a1a9baa8b1e56973": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2f5a973a-5eff-44eb-9ec4-cd51da63d682",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Andrew Nesbitt <andrewnez@gmail.com>",
+      "messages": [],
+      "total_additions": 283,
+      "total_deletions": 0,
+      "accepted_lines": 283,
+      "overriden_lines": 0
+    }
+  }
+}
