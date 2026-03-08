@@ -87,3 +87,7 @@ jobs:
 ```
 
 Note: `fetch-depth: 0` is required so git-pkgs can access the full commit history.
+
+## License
+
+Copyright (c) 2026 Andrew Nesbitt. MIT License.
