@@ -1,0 +1,49 @@
+name: "git-pkgs sbom"
+description: "Generate a CycloneDX or SPDX Software Bill of Materials"
+
+inputs:
+  format:
+    description: "SBOM format: cyclonedx or spdx"
+    required: false
+    default: "cyclonedx"
+  name:
+    description: "Component name for the SBOM. Defaults to the repository name."
+    required: false
+    default: ""
+  output:
+    description: "Output file path"
+    required: false
+    default: "sbom.json"
+  upload:
+    description: "Upload SBOM as a workflow artifact. Set to false to skip."
+    required: false
+    default: "true"
+
+outputs:
+  file:
+    description: "Path to the generated SBOM file"
+    value: ${{ inputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate SBOM
+      shell: bash
+      env:
+        FORMAT: ${{ inputs.format }}
+        NAME: ${{ inputs.name }}
+        OUTPUT: ${{ inputs.output }}
+        REPO: ${{ github.repository }}
+      run: |
+        component_name="${NAME}"
+        if [ -z "${component_name}" ]; then
+          component_name="${REPO}"
+        fi
+        git-pkgs sbom --format="${FORMAT}" --name="${component_name}" > "${OUTPUT}"
+
+    - name: Upload artifact
+      if: inputs.upload == 'true'
+      uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8bb81d5ecfe9e19cb744 # v4.6.2
+      with:
+        name: sbom
+        path: ${{ inputs.output }}

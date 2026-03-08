@@ -43,6 +43,16 @@ Enforces license policy with allow/deny lists.
     allow: "MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC"
 ```
 
+### `git-pkgs/actions/sbom`
+
+Generates a CycloneDX or SPDX Software Bill of Materials and uploads it as a workflow artifact.
+
+```yaml
+- uses: git-pkgs/actions/sbom@v1
+  with:
+    format: "cyclonedx" # or spdx
+```
+
 ## Full example
 
 ```yaml
