@@ -53,6 +53,16 @@ Generates a CycloneDX or SPDX Software Bill of Materials and uploads it as a wor
     format: "cyclonedx" # or spdx
 ```
 
+### `git-pkgs/actions/update`
+
+Opens pull requests for outdated dependencies, one PR per package. Run on a schedule for a lightweight Dependabot replacement.
+
+```yaml
+- uses: git-pkgs/actions/update@v1
+  with:
+    limit: 10
+```
+
 ## Full example
 
 ```yaml
