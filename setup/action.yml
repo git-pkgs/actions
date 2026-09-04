@@ -3,7 +3,7 @@ description: "Install git-pkgs and initialize the dependency database"
 
 inputs:
   version:
-    description: "git-pkgs version to install (e.g. 0.1.9). Defaults to latest."
+    description: "git-pkgs version to install (e.g. 0.19.0). Defaults to latest."
     required: false
     default: "latest"
   reindex:

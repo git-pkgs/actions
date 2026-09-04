@@ -11,7 +11,7 @@ Installs git-pkgs and initializes the dependency database.
 ```yaml
 - uses: git-pkgs/actions/setup@v1
   with:
-    version: "0.1.9" # optional, defaults to latest
+    version: "0.19.0" # optional, defaults to latest
 ```
 
 ### `git-pkgs/actions/diff`
