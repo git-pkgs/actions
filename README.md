@@ -100,4 +100,6 @@ Note: `fetch-depth: 0` is required so git-pkgs can access the full commit histor
 
 ## License
 
-Copyright (c) 2026 Andrew Nesbitt. MIT License.
+[MIT](LICENSE).
+
+Copyright (c) 2026 Andrew Nesbitt.
